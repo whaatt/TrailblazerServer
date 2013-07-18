@@ -1,0 +1,1 @@
+SELECT * FROM `events` LEFT JOIN `sessions` ON `events`.session = `sessions`.id WHERE `sessions`.location = 'Home' ORDER BY `time` ASC;
