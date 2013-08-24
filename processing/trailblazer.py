@@ -849,7 +849,7 @@ def simpleThresholdMap(uw, min, max, coeff, tracks):
 			if uw[i][j] == 0: uw[i][j] == 0
 			elif uw[i][j] < min: uw[i][j] = 0
 			elif uw[i][j] > max: uw[i][j] = 1
-			elif uw[i][j] > sig: uw[i][j] = 1
+			elif uw[i][j] >= sig: uw[i][j] = 1
 			elif uw[i][j] < sig: uw[i][j] = 0
 			
 	#output binary
