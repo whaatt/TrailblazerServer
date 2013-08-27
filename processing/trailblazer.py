@@ -131,21 +131,29 @@ def fakeData(data):
 #as a dictionary of session IDs
 #and their associated events
 def downloadData():
+	#read file using handler
 	file = open('query.sql', 'r')
-	query = file.read()
+	query = file.read() #get query
+	
+	#replace placeholders with the parameters
+	#param @1 is defined to be test location
+	query = query.replace('@1', getTestName())
+	
+	#encode the query as a URL-compliant POST string
 	post = urlencode({'query' : query}).encode('ascii')
-
+	
+	#this URL is where we currently host the TB server
 	url = 'http://www.skalon.com/trailblazer/retrieve.php'
-	response = urlopen(url, post)
+	response = urlopen(url, post) #download server response
 	data = json.loads(str(response.read().decode('utf-8')))
 	
+	#hold sessions
 	sessions = {}
 
+	#build sessions
 	for event in data:
-		if event['session'] not in sessions:
-			sessions[event['session']] = [event]
-		else:
-			sessions[event['session']].append(event)
+		if event['session'] not in sessions: sessions[event['session']] = [event]
+		else: sessions[event['session']].append(event) #if event session in array
 			
 	#return sessions array and count
 	return sessions, len(sessions)
@@ -377,12 +385,15 @@ def preprocess(data):
 				#that are now unnecessary
 				del session[idx]['type']
 				del session[idx]['time']
-				
+									
+			#store origin index
+			origins[key] = originIdx
+		
+		else: #originIdx None
+			origins[key] = 0
+		
 		#put session back in place
 		data[key] = session
-		
-		#store origin index
-		origins[key] = originIdx
 	
 	#output fixed
 	return data, origins

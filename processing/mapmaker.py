@@ -25,6 +25,10 @@ else: visible = True
 if sys.argv[4] == 'n': save = False
 else: save = True
 	
+#set whether we draw plot extensions
+if sys.argv[7] == 'n': exts = False
+else: exts = True
+	
 #set TIPS parameters and smoothing
 boxWidth = int(sys.argv[5])
 smoothThresh = int(sys.argv[6])
@@ -56,6 +60,7 @@ for y in range(0, imageWidth, boxWidth + 1):
 		#boolean values for each of our quadrants
 		I, II, III, IV = False, False, False, False
 		bI, bII, bIII, bIV = False, False, False, False
+		gU, gL, gR, gD = True, True, True, True
 		
 		#grid halfway point
 		halfway = boxWidth
@@ -72,7 +77,15 @@ for y in range(0, imageWidth, boxWidth + 1):
 			if type == 'LDe' : return [(x - 1, y + halfway), (x + halfway, y + halfway), (x + halfway, y + chunkSize - 1)]
 			if type == 'RDe' : return [(x + chunkSize - 1, y + halfway), (x + halfway, y + halfway), (x + halfway, y + chunkSize - 1)]
 			if type == 'LRs' : return [(x - 1, y + halfway), (x + halfway, y + halfway), (x + chunkSize - 1, y + halfway)]
-			if type == 'UDs' : return [(x + halfway, y - 1), (x + halfway, y + halfway), (x + halfway, y + chunkSize - 1)]	
+			if type == 'UDs' : return [(x + halfway, y - 1), (x + halfway, y + halfway), (x + halfway, y + chunkSize - 1)]
+			if type == 'LUs' : return [(x - 1, y + halfway), (x + halfway, y + halfway), (x + halfway, y - 1)]
+			if type == 'RUs' : return [(x + chunkSize - 1, y + halfway), (x + halfway, y + halfway), (x + halfway, y - 1)]
+			if type == 'LDs' : return [(x - 1, y + halfway), (x + halfway, y + halfway), (x + halfway, y + chunkSize - 1)]
+			if type == 'RDs' : return [(x + chunkSize - 1, y + halfway), (x + halfway, y + halfway), (x + halfway, y + chunkSize - 1)]
+			if type == 'MUt' : return [(x + halfway, y + halfway), (x + halfway, y + halfway - 1), (x + halfway, y - 1)]
+			if type == 'MLt' : return [(x - 1, y + halfway), (x, y + halfway), (x + halfway, y + halfway)]
+			if type == 'MRt' : return [(x + chunkSize - 1, y + halfway), (x + chunkSize - 2, y + halfway), (x + halfway, y + halfway)]
+			if type == 'MDt' : return [(x + halfway, y + halfway), (x + halfway, y + halfway + 1), (x + halfway, y + chunkSize - 1)]
 		
 		#see if quadrant II is colored
 		for i in range(y, y + boxWidth):
@@ -114,6 +127,29 @@ for y in range(0, imageWidth, boxWidth + 1):
 					break
 			if bIV: break
 		
+		#trigger for Type Four blocks
+		#draw thin-obstacle type lines
+		if I and II and III and IV:
+			#decide if to set upper gridline
+			for i in range(y - 1, y + boxWidth):
+				if [255, 255, 255] == image[i][x + boxWidth - 1].tolist():
+					gU = False
+					
+			#decide if to set lower gridline		
+			for i in range(y + boxWidth - 1, y + chunkSize):
+				if [255, 255, 255] == image[i][x + boxWidth - 1].tolist():
+					gD = False
+					
+			#decide if to set left gridline
+			for i in range(x - 1, x + boxWidth):
+				if [255, 255, 255] == image[y + boxWidth - 1][i].tolist():
+					gL = False
+			
+			#decide if to set right gridline
+			for i in range(x + boxWidth - 1, x + chunkSize):
+				if [255, 255, 255] == image[y + boxWidth - 1][i].tolist():
+					gR = False
+					
 		#combos contain all of the combinatorial
 		#types as specified in TIPS presentation
 		
@@ -133,7 +169,22 @@ for y in range(0, imageWidth, boxWidth + 1):
 			[I and III and IV, not II, ['LUi']],
 			[I and II and IV, not III, ['LDi']],
 			[I and II and III, not IV, ['RDi']],
-			[I and II and III and IV, True, ['XXs']] #class 4
+			[I and II and III and IV, not (gU or gD or gL or gR), ['XXs']], #class 4
+			[I and II and III and IV, gU and not (gD or gL or gR), ['MUt']],
+			[I and II and III and IV, gD and not (gU or gL or gR), ['MDt']],
+			[I and II and III and IV, gL and not (gU or gD or gR), ['MLt']],
+			[I and II and III and IV, gR and not (gU or gD or gL), ['MRt']],
+			[I and II and III and IV, (gU and gL) and not (gD or gR), ['LUs']],
+			[I and II and III and IV, (gU and gR) and not (gD or gL), ['RUs']],
+			[I and II and III and IV, (gU and gD) and not (gL or gR), ['UDs']],
+			[I and II and III and IV, (gR and gL) and not (gU or gD), ['LRs']],
+			[I and II and III and IV, (gR and gD) and not (gU or gL), ['RDs']],
+			[I and II and III and IV, (gL and gD) and not (gU or gR), ['LDs']],
+			[I and II and III and IV, (gU and gR and gL) and not gD, ['LUs', 'MRt']],
+			[I and II and III and IV, (gU and gR and gD) and not gL, ['UDs', 'MRt']],
+			[I and II and III and IV, (gU and gL and gD) and not gR, ['UDs', 'MLt']],
+			[I and II and III and IV, (gD and gR and gL) and not gU, ['LDs', 'MRt']],
+			[I and II and III and IV, gU and gR and gL and gD, ['LDs', 'RUs']]
 		]
 		
 		#generate, and find the array value in combos satisfying conditions
@@ -155,8 +206,11 @@ for y in range(0, imageWidth, boxWidth + 1):
 				if sub == 'e': corr = ['s', 'e', 's']
 				elif sub == 's': corr = ['s', 's', 's']
 				elif sub == 'i': corr = ['s', 'i', 's']
-				else: corr = ['s', 's', 's']
-					
+				elif sub == 't': corr = ['t', 't', 't']
+				
+				#if we are drawing a filled type edge with no exts
+				if I and II and III and IV and not exts: continue
+				
 				paths.append(edges[i])
 				corns.append(corr)
 
@@ -174,6 +228,33 @@ while idx < len(orgPaths):
 		
 		#try to stitch the point groups together
 		for i in range(len(orgPaths)-1, idx, -1):
+			#needs the algo extension
+			if orgCorns[i][0] == 't':
+			
+				if orgPaths[idx][0] == orgPaths[i][0]:
+					orgPaths[idx] = orgPaths[i][1:][::-1] + orgPaths[idx]
+					orgCorns[idx] = orgCorns[i][1:][::-1] + orgCorns[idx]
+					found = True
+					del orgPaths[i], orgCorns[i]
+					
+				elif orgPaths[idx][-1] == orgPaths[i][0]:
+					orgPaths[idx] = orgPaths[idx] + orgPaths[i][1:]
+					orgCorns[idx] = orgCorns[idx] + orgCorns[i][1:]
+					found = True
+					del orgPaths[i], orgCorns[i]
+					
+				elif orgPaths[idx][0] == orgPaths[i][2]:
+					orgPaths[idx] = orgPaths[i][:2] + orgPaths[idx]
+					orgCorns[idx] = orgCorns[i][:2] + orgCorns[idx]
+					found = True
+					del orgPaths[i], orgCorns[i]
+					
+				elif orgPaths[idx][-1] == orgPaths[i][2]:
+					orgPaths[idx] = orgPaths[idx] + orgPaths[i][:2][::-1]
+					orgCorns[idx] = orgCorns[idx] + orgCorns[i][:2][::-1]
+					found = True
+					del orgPaths[i], orgCorns[i]
+		
 			if orgPaths[idx][:2] == orgPaths[i][:2]:
 				orgPaths[idx] = [orgPaths[i][2]] + orgPaths[idx]
 				orgCorns[idx] = [orgCorns[i][2]] + orgCorns[idx]

@@ -34,5 +34,5 @@ plotHeatMap(product, 'gray', True, False, True)
 #set Python 2.7 location
 setPythonTwo('python27')
 
-#parameters are mapmaker location, save directory, file name, visibility, save, box width, smoothing thresh
-cmd.call([getPythonTwo(), getMyDirectory() + '/mapmaker.py', getTestSave(), 'gray.png', 'n', 'y', '12', '2'])
+#parameters are mapmaker location, save directory, file name, visibility, save, box width, smoothing thresh, exts
+cmd.call([getPythonTwo(), getMyDirectory() + '/mapmaker.py', getTestSave(), 'gray.png', 'n', 'y', '12', '2', 'y'])
