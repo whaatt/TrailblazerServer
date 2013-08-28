@@ -11,17 +11,17 @@ savedData, cnt = downloadData()
 raw = cleanData(savedData)
 
 #preprocess and superimpose sessions
-nice, origins = preprocess(raw) #GPS fixing
-steps, package = superimpose(nice, 'None', 1)
+nice, origins = preprocess(raw, False) #GPS
+steps, package = superimpose(nice, 'walk', 1)
 
 #generate the heat maps with steps, pixel, alpha, function, frame
 map, uw, labels = makeHeatMap(package, steps, .1, 0.5, square, 30)
 
 #generate the product binary heat map for saving
-product = simpleThresholdMap(uw, 2, 5, 0.1, cnt)
+product = simpleThresholdMap(uw, 0, 5, 0.1, cnt)
 
 #compare preprocessed data to original data
-plotCompare(raw, nice, origins, 5, False)
+plotCompare(raw, nice, origins, 5, True)
 
 #plot label-superimposed steps
 plotSuper(steps, 5, False, True)
@@ -35,4 +35,4 @@ plotHeatMap(product, 'gray', True, False, True)
 setPythonTwo('python27')
 
 #parameters are mapmaker location, save directory, file name, visibility, save, box width, smoothing thresh, exts
-cmd.call([getPythonTwo(), getMyDirectory() + '/mapmaker.py', getTestSave(), 'gray.png', 'n', 'y', '12', '2', 'y'])
+cmd.call([getPythonTwo(), getMyDirectory() + '/mapmaker.py', getTestSave(), 'gray.png', 'n', 'y', '50', '2', 'n'])

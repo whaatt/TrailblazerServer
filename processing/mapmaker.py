@@ -255,7 +255,7 @@ while idx < len(orgPaths):
 					found = True
 					del orgPaths[i], orgCorns[i]
 		
-			if orgPaths[idx][:2] == orgPaths[i][:2]:
+			elif orgPaths[idx][:2] == orgPaths[i][:2]:
 				orgPaths[idx] = [orgPaths[i][2]] + orgPaths[idx]
 				orgCorns[idx] = [orgCorns[i][2]] + orgCorns[idx]
 				orgCorns[idx][1] = orgCorns[i][1]

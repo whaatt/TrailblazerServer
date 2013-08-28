@@ -203,7 +203,7 @@ def cleanData(data):
 				continue
 			
 			if session[idx]['type'] == 'label':
-				if len(newData) > 1: #don't overwrite start location
+				if len(newData[key]) > 1: #don't overwrite start location
 					newData[key][-1]['label'] = session[idx]['content']
 			
 			elif session[idx]['type'] == 'absolute':
@@ -266,7 +266,7 @@ def transform(steps):
 	for idx in range(len(steps)):
 		steps[idx]['x'] += originAbs[0] - originRel[0]
 		steps[idx]['y'] += originAbs[1] - originRel[1]
-	
+		
 	for idx in range(1, len(steps)):
 		if steps[idx]['type'] == 'absolute':
 			reading = (steps[idx]['east'], steps[idx]['north'])
@@ -343,7 +343,8 @@ def transform(steps):
 	
 #preprocess footfalls with GPS coordinates
 #rotate x and y coords in absolute frame
-def preprocess(data):
+#skip defines whether we regard GPS or not
+def preprocess(data, skip = True):
 	#create copy of data
 	data = deep(data)
 	
@@ -358,6 +359,7 @@ def preprocess(data):
 		#get GPS with lowest accuracy
 		for idx in range(len(session)):
 			if session[idx]['type'] == 'absolute':
+				if not skip: continue #without GPS
 				accuracy = session[idx]['accuracy']
 				if originIdx is None or accuracy < best:
 					best = accuracy
@@ -372,7 +374,7 @@ def preprocess(data):
 			
 			#reassemble original session with fixes
 			session = left[::-1] + [session[originIdx]] + right
-		
+			
 			for idx in range(len(session)):
 				#get rid of absolute type parameters
 				if session[idx]['type'] == 'absolute':
@@ -499,7 +501,7 @@ def plotCompare(oldData, newData, origins, bound, show):
 		#define axes for both old and new
 		old.axis([minX, maxX, minY, maxY])
 		new.axis([minX, maxX, minY, maxY])
-	
+		
 	if show: plot.show()
 	plot.close() #done
 	
@@ -529,7 +531,7 @@ def superimpose(data, label, split):
 		for idx in range(len(session)):
 			session[idx]['x'] -= refX
 			session[idx]['y'] -= refY
-		
+			
 		#append falls to split with first
 		newSplitSession = [session[0]]
 		
@@ -666,8 +668,8 @@ def makeHeatMap(data, steps, pixel, alpha, function, frame):
 	#make scaling coefficient
 	coeff = round(1/pixel)
 	
-	minX, maxX = 0, 0
-	minY, maxY = 0, 0
+	minX, maxX = steps[0]['x'], steps[0]['x']
+	minY, maxY = steps[0]['y'], steps[0]['y']
 	
 	#find min and max vals of X and Y
 	#accounting for radius expansion
@@ -701,7 +703,7 @@ def makeHeatMap(data, steps, pixel, alpha, function, frame):
 	weighted = []
 	labels = []
 	
-	#initialize array with zeroes
+	#initialize zero matrix
 	for i in range(xRange):
 		heatmap.append([])
 		weighted.append([])
