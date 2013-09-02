@@ -130,7 +130,7 @@ def fakeData(data):
 #function to download JSON data
 #as a dictionary of session IDs
 #and their associated events
-def downloadData():
+def downloadData(omit, offset):
 	#read file using handler
 	file = open('query.sql', 'r')
 	query = file.read() #get query
@@ -154,7 +154,12 @@ def downloadData():
 	for event in data:
 		if event['session'] not in sessions: sessions[event['session']] = [event]
 		else: sessions[event['session']].append(event) #if event session in array
-			
+		
+	#remove trials
+	for key in omit:
+		#identify by figure number
+		del sessions[offset + key]
+		
 	#return sessions array and count
 	return sessions, len(sessions)
 
@@ -702,6 +707,9 @@ def makeHeatMap(data, steps, pixel, alpha, function, frame):
 	heatmap = []
 	weighted = []
 	labels = []
+	
+	#debug runtime issues
+	#print(xRange, yRange)
 	
 	#initialize zero matrix
 	for i in range(xRange):

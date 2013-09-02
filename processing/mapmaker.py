@@ -13,9 +13,9 @@ from copy import deepcopy as deep
 #get distance between
 #two XY coordinates
 def distance(first, second):
-	xsq = (second[0] - first[0])**2
-	ysq = (second[1] - first[1])**2
-	return (xsq + ysq)**(1/2)
+	xSquare = (second[0] - first[0]) ** 2
+	ySquare = (second[1] - first[1]) ** 2
+	return (xSquare + ySquare) ** (0.5)
 
 #set whether generated plots are shown
 if sys.argv[3] == 'n': visible = False
@@ -42,6 +42,7 @@ image = cv2.imread(saveDir + '/' + saveFile)
 drawing = np.zeros(image.shape, np.uint8)
 drawings = np.zeros(image.shape, np.uint8)
 drawingo = np.zeros(image.shape, np.uint8)
+drawingf = np.zeros(image.shape, np.uint8)
 
 #get width and height of image
 imageLength = image.shape[1]
@@ -97,7 +98,12 @@ for y in range(0, imageWidth, boxWidth + 1):
 					break
 			if bII: break
 		
-		#see if quadrant I is colored		
+		if bII: #color in appropriate pixels
+			for i in range(y, y + boxWidth):
+				for j in range(x, x + boxWidth):
+					drawingf[i][j] = [255, 255, 255]
+					
+		#see if quadrant I is colored
 		for i in range(y, y + boxWidth):
 			for j in range(x + boxWidth + 1, x + chunkSize - 1):
 				if i > imageWidth - 1 or j > imageLength - 1:
@@ -106,7 +112,12 @@ for y in range(0, imageWidth, boxWidth + 1):
 					I, bI = True, True
 					break
 			if bI: break
-			
+		
+		if bI: #color in appropriate pixels
+			for i in range(y, y + boxWidth):
+				for j in range(x + boxWidth + 1, x + chunkSize - 1):
+					drawingf[i][j] = [255, 255, 255]
+		
 		#see if quadrant III is colored
 		for i in range(y + boxWidth + 1, y + chunkSize - 1):
 			for j in range(x, x + boxWidth):
@@ -117,7 +128,12 @@ for y in range(0, imageWidth, boxWidth + 1):
 					break
 			if bIII: break
 		
-		#see if quadrant IV is colored		
+		if bIII: #color in appropriate pixels
+			for i in range(y + boxWidth + 1, y + chunkSize - 1):
+				for j in range(x, x + boxWidth):
+					drawingf[i][j] = [255, 255, 255]
+		
+		#see if quadrant IV is colored
 		for i in range(y + boxWidth + 1, y + chunkSize - 1):
 			for j in range(x + boxWidth + 1, x + chunkSize - 1):
 				if i > imageWidth - 1 or j > imageLength - 1:
@@ -127,6 +143,11 @@ for y in range(0, imageWidth, boxWidth + 1):
 					break
 			if bIV: break
 		
+		if bIV: #color in appropriate pixels
+			for i in range(y + boxWidth + 1, y + chunkSize - 1):
+				for j in range(x + boxWidth + 1, x + chunkSize - 1):
+					drawingf[i][j] = [255, 255, 255]
+					
 		#trigger for Type Four blocks
 		#draw thin-obstacle type lines
 		if I and II and III and IV:
@@ -337,15 +358,19 @@ for i in range(len(orgCorns)):
 				fi = j #set first appearance location
 				
 			elif ec != 1:
-				smoothPaths[i] += deep(orgPaths[i][fi:j+1])
+				smoothPaths[i] += deep(orgPaths[i][fi+1:j+1])
 				fi = j #set first appearance location
 				
 			elif si is None:
-				si = j #set first appearance location
+				si = j #set second appearance location
 				
 				#see if the distance between two internals is less than thresh
 				if distance(orgPaths[i][fi], orgPaths[i][si]) < smoothThresh:
 					smoothPaths[i] += deep([orgPaths[i][si]])
+					j = si #set loop iteration counter forward
+				
+				else: #otherwise, we just leave the original cover
+					smoothPaths[i] += deep(orgPaths[i][fi+1:si+1])
 					j = si #set loop iteration counter forward
 				
 				fi = si
@@ -377,9 +402,9 @@ for path in smoothPaths:
 		x1, y1 = path[i][0], path[i][1]
 		x2, y2 = path[i+1][0], path[i+1][1]
 		
-		cv2.line(image,(x1, y1), (x2, y2), (255,0,255), 1)
-		cv2.line(drawing,(x1, y1), (x2, y2), (255,0,255), 1)
-		cv2.line(drawings,(x1, y1), (x2, y2), (255,0,255), 1)
+		cv2.line(image,(x1, y1), (x2, y2), (255, 0, 255), 1)
+		cv2.line(drawing,(x1, y1), (x2, y2), (255, 0, 255), 1)
+		cv2.line(drawings,(x1, y1), (x2, y2), (255, 0, 255), 1)
 		
 #draw the original TIPS lines
 for path in range(len(orgPaths)):
@@ -387,9 +412,10 @@ for path in range(len(orgPaths)):
 		x1, y1 = orgPaths[path][i][0], orgPaths[path][i][1]
 		x2, y2 = orgPaths[path][i+1][0], orgPaths[path][i+1][1]
 		
-		cv2.line(image,(x1, y1), (x2, y2), (255,0,0), 1)
-		cv2.line(drawing,(x1, y1), (x2, y2), (255,0,0), 1)
-		cv2.line(drawingo,(x1, y1), (x2, y2), (255,0,0), 1)
+		cv2.line(image,(x1, y1), (x2, y2), (255, 0, 0), 1)
+		cv2.line(drawing,(x1, y1), (x2, y2), (255, 0, 0), 1)
+		cv2.line(drawingo,(x1, y1), (x2, y2), (255, 0, 0), 1)
+		cv2.line(drawingf,(x1, y1), (x2, y2), (255, 0, 0), 1)
 
 #show images or not
 if visible == True:
@@ -403,6 +429,7 @@ if save == True:
 	cv2.imwrite(saveDir + '/' + 'rawCover.png', image)
 	cv2.imwrite(saveDir + '/' + 'origCover.png', drawingo)
 	cv2.imwrite(saveDir + '/' + 'origSmooth.png', drawing)
+	cv2.imwrite(saveDir + '/' + 'origFilled.png', drawingf)
 	cv2.imwrite(saveDir + '/' + 'smoothCover.png', drawings)
 
 #boilerplate
