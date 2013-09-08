@@ -130,7 +130,7 @@ def fakeData(data):
 #function to download JSON data
 #as a dictionary of session IDs
 #and their associated events
-def downloadData(omit, offset):
+def downloadData(omit):
 	#read file using handler
 	file = open('query.sql', 'r')
 	query = file.read() #get query
@@ -157,8 +157,8 @@ def downloadData(omit, offset):
 		
 	#remove trials
 	for key in omit:
-		#identify by figure number
-		del sessions[offset + key]
+		#identify by figure number, without requiring some offset
+		del sessions[[i for i in sorted(sessions.keys())][key - 1]]
 		
 	#return sessions array and count
 	return sessions, len(sessions)
@@ -170,7 +170,7 @@ def timeSort(dic):
 
 #strip unnececessary JSON parameters
 #associate labels and GPS with footfalls
-def cleanData(data):
+def cleanData(data, rotate, head = None):
 	#create copy of data
 	data = deep(data)
 	
@@ -178,21 +178,47 @@ def cleanData(data):
 	#labels and GPS
 	newData = {}
 	
+	#rotations
+	rotCos = 0
+	rotSin = 0
+	
+	#rot set or not
+	rotSet = False
+	
 	for key, session in data.items():
 		session = sorted(session, key = timeSort) #sort events by time
 		newData[key] = []
 		
-		#first relative
+		#relatives
 		relIdx = 0
+		relId2 = 1
 		
 		while session[relIdx]['type'] != 'relative':
 			relIdx += 1 #loop through until found
+			relId2 += 1 #use to find second reltv
+			
+		while session[relId2]['type'] != 'relative':
+			relId2 += 1 #loop through until found
 			
 		xValue = session[relIdx]['absX']
 		yValue = session[relIdx]['absY']
 		stride = session[relIdx]['stride']
 		time = session[relIdx]['time']
-		label = session[relIdx]['start'] 
+		label = session[relIdx]['start']
+		
+		#auto-rotate if rotation is not set
+		if (head is None) and (not rotSet):
+			#get heading of the first step
+			head = session[relId2]['heading']
+		
+		#calculate rot trig values
+		if (not rotSet) and (rotate):
+			#figure out rotation matrix values
+			rotCos = math.cos(math.radians(head))
+			rotSin = math.sin(math.radians(head))
+			
+			#unset rotSet
+			rotSet = True
 				
 		newData[key].append({
 			'type' : 'relative',
@@ -237,6 +263,11 @@ def cleanData(data):
 					'stride' : stride,
 					'time' : time
 				})
+				
+				#rotates
+				if rotate:
+					newData[key][-1]['x'] = xValue * rotCos - yValue * rotSin
+					newData[key][-1]['y'] = xValue * rotSin + yValue * rotCos
 	
 	#output organized
 	return newData
@@ -544,6 +575,23 @@ def superimpose(data, label, split):
 		for idx in range(1, len(session)):
 			dx = (session[idx]['x'] - session[idx-1]['x'])
 			dy = (session[idx]['y'] - session[idx-1]['y'])
+			
+			#avoid zero
+			if dx == 0:
+			
+				#define fake dy split length 
+				splitLength = dy / (split + 1)
+			
+				#calculate the extrapolations
+				for i in range(1, split + 1):
+					newSplitSession.append({
+						'x' : session[idx-1]['x'], #value constant
+						'y' : session[idx-1]['y'] + i * splitLength,
+						'stride' : session[idx]['stride'], #use old
+					})
+					
+				#errors
+				continue
 			
 			#define slope
 			slope = dy/dx

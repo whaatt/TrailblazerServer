@@ -7,12 +7,12 @@ setTestRoot('C:/Users/Sanjay/Documents/Programming/Trailblazer/tests')
 setTestSave() #using the test root and test name, get save location
 
 #download data and omit any trials deemed problematic from figures
-savedData, cnt = downloadData([21, 20, 16, 11, 7], 68) #17, 8, 9?
-raw = cleanData(savedData) #clean up any unneeded data parameters
+savedData, cnt = downloadData([]) #Green Hope: [21, 20, 16, 11, 7]
+raw = cleanData(savedData, True) #clean up any unneeded parameters
 
 #preprocess and superimpose sessions
 nice, origins = preprocess(raw, False) #GPS
-steps, package = superimpose(nice, 'gt', 1)
+steps, package = superimpose(nice, 'None', 1)
 
 #generate the heat maps with steps, pixel, alpha, function, frame
 map, uw, labels = makeHeatMap(package, steps, .4, 0.5, linear, 30)
