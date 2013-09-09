@@ -20,6 +20,9 @@ from utm import from_latlon as toUTM
 #import deep array copy for functions
 from copy import deepcopy as deep
 
+#import image handling
+from PIL import Image
+
 #used for saving files
 testName = 'No Name'
 
@@ -155,8 +158,8 @@ def downloadData(omit):
 		if event['session'] not in sessions: sessions[event['session']] = [event]
 		else: sessions[event['session']].append(event) #if event session in array
 		
-	#remove trials
-	for key in omit:
+	#remove trials by session key
+	for key in sorted(omit)[::-1]:
 		#identify by figure number, without requiring some offset
 		del sessions[[i for i in sorted(sessions.keys())][key - 1]]
 		
@@ -490,8 +493,8 @@ def plotCompare(oldData, newData, origins, bound, show):
 		newData[key][0]['x'] = [i['x'] for i in newData[key]]
 		newData[key][0]['y'] = [i['y'] for i in newData[key]]
 		
-	#draw plots for every session
-	for key, session in oldData.items():
+	#draw plots for every session key
+	for key in sorted(oldData.keys()):
 		#instantiate two different subplots that share the XY axes
 		f, (new, old) = plot.subplots(2, sharex = True, sharey = True)
 		
@@ -845,7 +848,9 @@ def makeHeatMap(data, steps, pixel, alpha, function, frame):
 #axisOff sets axes or not
 #show sets show plot or not
 #save sets save file or not
-def plotHeatMap(heat, color, axisOff, show, save):
+#resize sets resize or not
+#resCo is resize coefficient
+def plotHeatMap(heat, color, axisOff, show, save, resize, resCo):
 	#create copy of data
 	heat = deep(heat)
 	
@@ -865,6 +870,15 @@ def plotHeatMap(heat, color, axisOff, show, save):
 	
 	if show: plot.show() #show the stuff out to the screen
 	if save: plot.savefig(getTestSave() + '/' + color + '.png')
+	
+	#calculate tuple to resize the grayscale image
+	res = (len(heat[0]) * resCo, len(heat) * resCo)
+	
+	#if OpenCV image
+	if resize == True:
+		image = Image.open(getTestSave() + '/' + color + '.png') #open
+		image = image.resize(res, Image.NEAREST) #resize image to scale
+		image.save(getTestSave() + '/' + color + '.png') #resave to file
 	
 	#close plot
 	plot.close()

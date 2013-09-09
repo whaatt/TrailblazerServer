@@ -7,7 +7,7 @@ setTestRoot('C:/Users/Sanjay/Documents/Programming/Trailblazer/tests')
 setTestSave() #using the test root and test name, get save location
 
 #download data and omit any trials deemed problematic from figures
-savedData, cnt = downloadData([]) #Green Hope: [21, 20, 16, 11, 7]
+savedData, cnt = downloadData([6, 23]) #remove trials with faults
 raw = cleanData(savedData, True) #clean up any unneeded parameters
 
 #preprocess and superimpose sessions
@@ -21,18 +21,18 @@ map, uw, labels = makeHeatMap(package, steps, .4, 0.5, linear, 30)
 product = simpleThresholdMap(uw, 0, 5, 0, cnt)
 
 #compare preprocessed data to original data
-plotCompare(raw, nice, origins, 5, True)
+plotCompare(raw, nice, origins, 5, False)
 
 #plot label-superimposed steps
 plotSuper(steps, 5, False, True)
 
 #plot heat map with color
 #then plot grayscale version
-plotHeatMap(map, 'hot', False, False, True)
-plotHeatMap(product, 'gray', True, False, True)
+plotHeatMap(map, 'hot', False, False, True, False, 5)
+plotHeatMap(product, 'gray', True, False, True, False, 5)
 
 #set Python 2.7 location
 setPythonTwo('python27')
 
 #parameters are mapmaker location, save directory, file name, visibility, save, box width, smoothing thresh, extns
-cmd.call([getPythonTwo(), getMyDirectory() + '/mapmaker.py', getTestSave(), 'gray.png', 'n', 'y', '30', '90', 'n'])
+cmd.call([getPythonTwo(), getMyDirectory() + '/mapmaker.py', getTestSave(), 'gray.png', 'n', 'y', '15', '30', 'n'])
