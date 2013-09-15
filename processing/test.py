@@ -7,7 +7,7 @@ setTestRoot('C:/Users/Sanjay/Documents/Programming/Trailblazer/tests')
 setTestSave() #using the test root and test name, get save location
 
 #download data and omit any trials deemed problematic from figures
-savedData, cnt = downloadData([6, 23]) #remove trials with faults
+savedData, cnt = downloadData([6, 23], 0) #remove trials with prob
 raw = cleanData(savedData, True) #clean up any unneeded parameters
 
 #preprocess and superimpose sessions

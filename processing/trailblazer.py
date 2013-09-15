@@ -133,7 +133,7 @@ def fakeData(data):
 #function to download JSON data
 #as a dictionary of session IDs
 #and their associated events
-def downloadData(omit):
+def downloadData(omit, remove):
 	#read file using handler
 	file = open('query.sql', 'r')
 	query = file.read() #get query
@@ -162,6 +162,12 @@ def downloadData(omit):
 	for key in sorted(omit)[::-1]:
 		#identify by figure number, without requiring some offset
 		del sessions[[i for i in sorted(sessions.keys())][key - 1]]
+		
+	#random trials
+	if remove != 0:
+		while remove > 0:
+			del sessions[[i for i in sessions.keys()][-1]]
+			remove -= 1 #subtract until we're done removing
 		
 	#return sessions array and count
 	return sessions, len(sessions)
